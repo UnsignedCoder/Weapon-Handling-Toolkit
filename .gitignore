@@ -1,5 +1,12 @@
 # Visual Studio 2015 user specific files
 .vs/
+Content/
+.idea/
+.dvignore
+.diversion/
+.vsconfig
+WeaponHandlng.sln.DotSettings.user
+
 
 # Compiled Object files
 *.slo

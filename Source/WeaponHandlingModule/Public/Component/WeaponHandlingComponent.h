@@ -22,7 +22,7 @@ enum class EWeaponType : uint8
 
 /**
  * Controls how the weapon responds to player input, allowing for different weapon archetypes
- * and playstyles. This affects both the feel of the weapon and its tactical usage.
+ * and play styles. This affects both the feel of the weapon and its tactical usage.
  */
 UENUM(BlueprintType) 
 enum class EFiringMode : uint8
@@ -67,133 +67,195 @@ public:
      * @param Mesh The weapon mesh used for barrel position and direction
      * @param WeaponFIreHitResult Contains hit information when the weapon successfully hits a target
      * @param WeaponRangeEndLocation The end point of the weapon's range, used for effects and debugging
-     * @param InstigatorController
+     * @param InstigatorController The controller responsible for firing the weapon
      */
     UFUNCTION(BlueprintCallable)
     void FireWeapon( const TArray<AActor*>& ActorsToIgnore, USkeletalMeshComponent* Mesh, FHitResult& WeaponFIreHitResult, FVector& WeaponRangeEndLocation, AController* InstigatorController );
 
-protected:
-    virtual void BeginPlay() override;
-
     /**
-     * Performs the initial trace from screen center to determine the player's intended target.
-     * This method supports both hip-fire and aimed shooting while maintaining consistent
-     * accuracy and feel across different camera perspectives.
-     * 
-     * Returns false if no collision is detected within weapon range.
+     * Creates a visual effect for the bullet trail.
+     * Helps players see where their shots are going.
      */
-    bool ScreenTrace(const TArray<AActor*>& ActorsToIgnore, FHitResult& TraceHitResult, FVector& TraceEndLocation) const;
-    
-
-    /**
-     * Handles the actual weapon discharge logic, separating it from the public interface
-     * to allow for future expansion (like weapon states, ammo checks, etc.) without
-     * modifying the core firing logic.
-     */
-    void ExecuteWeaponFire( const TArray<AActor*>& ActorsToIgnore, USkeletalMeshComponent* Mesh, FHitResult& WeaponFIreHitResult, FVector& WeaponRangeEndLocation, AController* InstigatorController ) const;
-
-    /**
-     * Performs a secondary trace from the weapon barrel to prevent shooting through walls
-     * when using third-person or over-the-shoulder cameras. This ensures realistic weapon
-     * behavior regardless of camera position while maintaining good game feel.
-     */
-    bool WeaponTrace(const TArray<AActor*>& ActorsToIgnore, const USkeletalMeshComponent* Mesh, FHitResult& TraceHitResult, FVector& TraceEndLocation) const;
-    
-public:
-    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
     void SpawnBulletTrail( const FHitResult& TraceHitResult, const USkeletalMeshComponent* Mesh ) const;
     
     /**
      * Applies damage to an actor hit by a weapon.
+     * Checks if the target can take damage and applies the appropriate amount.
      * 
-     * @param WeaponFIreHitResult Reference to the hit result containing information about what was hit
-     * @param InstigatorController Pointer to the controller responsible for causing the damage
-     * 
-     * @note This function only applies damage if the hit actor implements the IDamageInterface
-     * @see IDamageInterface::ApplyDamage
+     * @param WeaponFIreHitResult Information about what was hit
+     * @param InstigatorController The controller responsible for the damage
      */
     void DamageActor(FHitResult& WeaponFIreHitResult, AController* InstigatorController) const;
 
-private:
+protected:
+    virtual void BeginPlay() override;
+
+    
     /**
-     * Core Weapon Properties
+     * Determines where the player is aiming by tracing from the center of the screen.
+     * This is used for raycast-based weapons to find the target location.
+     * 
+     * @param ActorsToIgnore Actors that should not be hit by the trace (e.g., the player)
+     * @param TraceHitResult Stores information about what the trace hits
+     * @param TraceEndLocation Stores the end point of the trace
+     * 
+     * @return True if the trace hits something, false otherwise
      */
+    bool ScreenTrace(const TArray<AActor*>& ActorsToIgnore, FHitResult& TraceHitResult, FVector& TraceEndLocation) const;
+
+    /**
+     * Handles the actual weapon discharge logic, including hit detection, effects, and damage.
+     * Separates the core firing logic from the public interface to allow for future expansion.
+     */
+    void ExecuteWeaponFire( const TArray<AActor*>& ActorsToIgnore, USkeletalMeshComponent* Mesh, FHitResult& WeaponFIreHitResult, FVector& WeaponRangeEndLocation, AController* InstigatorController ) const;
+
+    /**
+     * Ensures shots originate from the weapon barrel and don't pass through walls.
+     * Prevents unrealistic shooting through obstacles when using third-person or over-the-shoulder cameras.
+     */
+    bool WeaponTrace(const TArray<AActor*>& ActorsToIgnore, const USkeletalMeshComponent* Mesh, FHitResult& TraceHitResult, FVector& TraceEndLocation) const;
+
+    /**
+     * Resets the weapon's firing state to allow another shot.
+     * Used for single-shot and burst-fire weapons.
+     */
+    void ResetShouldFireWeapon();
+
+    /**
+     * Resets the burst fire cooldown to allow another burst.
+     * Ensures burst fire behaves as intended.
+     */
+    void ResetBurstShotCooldown();
+
+public:
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+private:
+    // ------------------------------
+    // Weapon Configuration
+    // ------------------------------
+
     /** The type of weapon (e.g., raycast, projectile, melee) */
-    UPROPERTY(EditAnywhere, Category = "Weapon | Core")
+    UPROPERTY(EditAnywhere, Category = "Weapon | Configuration")
     EWeaponType WeaponType;
 
     /** Socket name on the weapon mesh where projectiles or traces originate from */
-    UPROPERTY(EditAnywhere, Category = "Weapon | Core")
+    UPROPERTY(EditAnywhere, Category = "Weapon | Configuration")
     FName WeaponBarrelSocket;
 
-    /**
-     * Firing Configuration
-     */
+    // ------------------------------
+    // Firing Mechanics
+    // ------------------------------
+
     /** Determines how the weapon fires (single shot, burst, automatic) - only for raycast weapons */
-    UPROPERTY(EditAnywhere, Category = "Weapon | Firing", meta=(EditCondition = "WeaponType == EWeaponType::EWT_Raycast"))
+    UPROPERTY(EditAnywhere, Category = "Weapon | Firing Mechanics", meta=(EditCondition = "WeaponType == EWeaponType::EWT_Raycast"))
     EFiringMode FiringMode;
 
+    /** Rate of fire for the weapon, controlling how quickly it can be fired */
+    UPROPERTY(EditAnywhere, Category = "Weapon | Firing Mechanics")
+    float WeaponFireRate;
+
+    /** Maximum number of shots in a burst for burst-fire weapons */
+    UPROPERTY(EditAnywhere, Category = "Weapon | Firing Mechanics", meta=( EditCondition = "FiringMode == EFiringMode::EFM_Burst"))
+    uint32 MaxBurstShotCount;
+
+    /** Cooldown time between bursts for burst-fire weapons */
+    UPROPERTY(EditAnywhere, Category = "Weapon | Firing Mechanics", meta=( EditCondition = "FiringMode == EFiringMode::EFM_Burst"))
+    float BurstShotCooldown;
+
+    // ------------------------------
+    // Combat Parameters
+    // ------------------------------
+
     /** Maximum distance in units that the weapon's raycast can travel */
-    UPROPERTY(EditAnywhere, Category = "Weapon | Firing", meta=(EditCondition = "WeaponType == EWeaponType::EWT_Raycast"))
+    UPROPERTY(EditAnywhere, Category = "Weapon | Combat Parameters", meta=(EditCondition = "WeaponType == EWeaponType::EWT_Raycast"))
     float WeaponRange;
 
     /** Base damage value inflicted by each successful hit */
-    UPROPERTY(EditAnywhere, Category = "Weapon | Firing", meta=(EditCondition = "WeaponType == EWeaponType::EWT_Raycast"))
+    UPROPERTY(EditAnywhere, Category = "Weapon | Combat Parameters", meta=(EditCondition = "WeaponType == EWeaponType::EWT_Raycast"))
     float WeaponDamage;
 
     /** Whether to perform additional trace tests for weapon firing (for advanced hit detection) */
-    UPROPERTY(EditAnywhere, Category = "Weapon | Firing", meta=(EditCondition = "WeaponType == EWeaponType::EWT_Raycast"))
+    UPROPERTY(EditAnywhere, Category = "Weapon | Combat Parameters", meta=(EditCondition = "WeaponType == EWeaponType::EWT_Raycast"))
     bool bShouldPerformWeaponTraceTest;
 
-    /**
-     * Shot Pattern Configuration
-     */
+    // ------------------------------
+    // Shot Characteristics
+    // ------------------------------
+
     /** Pattern for weapon shots (straight line, spread, custom) - only for raycast weapons */
-    UPROPERTY(EditAnywhere, Category = "Weapon | ShotPattern", meta=(EditCondition = "WeaponType == EWeaponType::EWT_Raycast"))
+    UPROPERTY(EditAnywhere, Category = "Weapon | Shot Characteristics", meta=(EditCondition = "WeaponType == EWeaponType::EWT_Raycast"))
     EShotPattern ShotPattern;
 
     /** Number of pellets/projectiles fired per bullet for spread pattern weapons */
-    UPROPERTY(EditAnywhere, Category = "Weapon | ShotPattern", meta=(EditCondition = "ShotPattern == EShotPattern::ESP_Spread"))
+    UPROPERTY(EditAnywhere, Category = "Weapon | Shot Characteristics", meta=(EditCondition = "ShotPattern == EShotPattern::ESP_Spread"))
     int PallatesPerBullet;
 
     /** Minimum angle/distance for the spread pattern (tighter spread) */
-    UPROPERTY(EditAnywhere, Category = "Weapon | ShotPattern", meta=(EditCondition = "ShotPattern == EShotPattern::ESP_Spread"))
+    UPROPERTY(EditAnywhere, Category = "Weapon | Shot Characteristics", meta=(EditCondition = "ShotPattern == EShotPattern::ESP_Spread"))
     float MinimumSpreadRange;
 
     /** Maximum angle/distance for the spread pattern (wider spread) */
-    UPROPERTY(EditAnywhere, Category = "Weapon | ShotPattern", meta=(EditCondition = "ShotPattern == EShotPattern::ESP_Spread"))
+    UPROPERTY(EditAnywhere, Category = "Weapon | Shot Characteristics", meta=(EditCondition = "ShotPattern == EShotPattern::ESP_Spread"))
     float MaximumSpreadRange;
 
-    /**
-     * Visual Effects
-     */
+    // ------------------------------
+    // Visual Feedback
+    // ------------------------------
+
     /** Particle system to spawn at the muzzle when the weapon fires */
-    UPROPERTY(EditAnywhere, Category = "Weapon | Effects")
+    UPROPERTY(EditAnywhere, Category = "Weapon | Visual Feedback")
     TObjectPtr<UParticleSystem> MuzzleFlash;
 
     /** Particle effect for bullet trail/tracer visualization */
-    UPROPERTY(EditAnywhere, Category = "Weapon | Effects")
+    UPROPERTY(EditAnywhere, Category = "Weapon | Visual Feedback")
     TObjectPtr<UParticleSystem> BeamTrail;
 
     /** Particle effect spawned at the impact point of the weapon's trace/projectile */
-    UPROPERTY(EditAnywhere, Category = "Weapon | Effects")
+    UPROPERTY(EditAnywhere, Category = "Weapon | Visual Feedback")
     TObjectPtr<UParticleSystem> ImpactParticle;
 
-    /**
-     * Audio Effects
-     */
+    // ------------------------------
+    // Audio Feedback
+    // ------------------------------
+
     /** Sound to play when the weapon is fired */
-    UPROPERTY(EditAnywhere, Category = "Weapon | Audio")
+    UPROPERTY(EditAnywhere, Category = "Weapon | Audio Feedback")
     TObjectPtr<USoundBase> WeaponFireSound;
 
-    /**
-     * Animation
-     */
+    // ------------------------------
+    // Animation
+    // ------------------------------
+
     /** Animation montage to play on the character when the weapon is fired */
     UPROPERTY(EditAnywhere, Category = "Weapon | Animation")
     TObjectPtr<UAnimMontage> WeaponFireMontage;
 
+    // ------------------------------
+    // Internal State
+    // ------------------------------
+
+    /** End location of the weapon's trace, used for debugging and effects */
     UPROPERTY()
     FVector FireWeaponTraceEndLocation;
+
+    /** Current number of shots fired in the current burst */
+    UPROPERTY()
+    uint32 CurrentBurstShotCount;
+
+    /** Whether the weapon is ready to fire */
+    UPROPERTY()
+    bool bShouldFireWeapon;
+
+    /** Whether the weapon is currently in burst cooldown */
+    UPROPERTY()
+    bool bShouldBurstShotCooldown;
+
+    /** Timer handle for managing weapon fire rate */
+    UPROPERTY()
+    FTimerHandle WeaponFireTimer;
+
+    /** Timer handle for managing burst fire cooldown */
+    UPROPERTY()
+    FTimerHandle WeaponBurstCooldownTImer;
 };

@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "DamageInterface.generated.h"
+#include "PawnDamageInterface.generated.h"
 
 // This class does not need to be modified.
 UINTERFACE()
-class UDamageInterface : public UInterface
+class UPawnDamageInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -16,7 +16,7 @@ class UDamageInterface : public UInterface
 /**
  * 
  */
-class WEAPONHANDLINGMODULE_API IDamageInterface
+class WEAPONHANDLINGMODULE_API IPawnDamageInterface
 {
 	GENERATED_BODY()
 
@@ -30,7 +30,7 @@ public:
 	 * @param DamageCauser           The actor that directly caused the damage (can be null).
 	 * @param DamageHitResult        The hit result from the trace/test that caused this damage.
 	 * @param DamageCue              Optional sound to play when damage is applied. Defaults to nullptr.
-	 * @param DamageFX               Optional particle effect to spawn at damage location. Defaults to nullptr.
+	 * @param DefaultWeaponImpactFX               Optional particle effect to spawn at damage location. Defaults to nullptr.
 	 *
 	 * This is a pure virtual function that must be implemented by any class that inherits this interface.
 	 * Implementing classes should define how damage is calculated, applied, and what visual/audio feedback
@@ -39,5 +39,5 @@ public:
 	 * on the resulting health state.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Damage")
-	void ApplyDamage(float DamageAmount, AController* InstigatorController, AActor* DamageCauser, FHitResult& DamageHitResult, UParticleSystem* DamageFX);
+	void ApplyDamage( float DamageAmount, AController* InstigatorController, AActor* DamageCauser, FHitResult& DamageHitResult, UParticleSystem* DefaultWeaponImpactFX = nullptr );
 };

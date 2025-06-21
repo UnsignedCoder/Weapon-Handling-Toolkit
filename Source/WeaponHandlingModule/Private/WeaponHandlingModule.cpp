@@ -7,15 +7,10 @@
 
 #define LOCTEXT_NAMESPACE "FWeaponHandlingModule"
 
-void FWeaponHandlingModule::StartupModule()
-{
-}
+void FWeaponHandlingModule::StartupModule() {}
 
-void FWeaponHandlingModule::ShutdownModule()
-{
-	
-}
+void FWeaponHandlingModule::ShutdownModule() {}
 
 #undef LOCTEXT_NAMESPACE
-	
+
 IMPLEMENT_MODULE(FWeaponHandlingModule, WeaponHandlingModule);

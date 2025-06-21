@@ -31,8 +31,7 @@ void ACharacterController::OnPossess( APawn* aPawn ) {
 	// Bind input actions to their respective methods
 	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACharacterController::Move);
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACharacterController::HandleLookAndAiming);
-	
-	EnhancedInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Triggered, this, &ACharacterController::HandleWeaponFire);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacterController::HandleJump);
 }
 
 
@@ -81,6 +80,6 @@ void ACharacterController::HandleLookAndAiming( const FInputActionValue& Value )
 	AddPitchInput(LookAxisValue.Y);
 }
 
-void ACharacterController::HandleWeaponFire() {
-	PlayerCharacter->FireWeapon();
+void ACharacterController::HandleJump() {
+	PlayerCharacter->Jump();
 }

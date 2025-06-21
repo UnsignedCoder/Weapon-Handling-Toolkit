@@ -40,10 +40,5 @@ void AFPSCharacterBase::SetupPlayerInputComponent( UInputComponent* PlayerInputC
 
 
 void AFPSCharacterBase::FireWeapon() {
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Emplace(this);
-	FHitResult WeaponFireHitResult;
-	FVector TraceEndLocation;
-	
-	WeaponHandlingComponent->FireWeapon(ActorsToIgnore, GetMesh(), WeaponFireHitResult, TraceEndLocation, GetController() );
+	WeaponHandlingComponent->WeaponAttack();
 }

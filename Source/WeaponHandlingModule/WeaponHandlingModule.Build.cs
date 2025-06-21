@@ -6,25 +6,24 @@ public class WeaponHandlingModule : ModuleRules
 {
 	public WeaponHandlingModule(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] 
-			{ 
-				"Core",
-				"CoreUObject",
-				"Engine"
-			});
-		
+		PublicDependencyModuleNames.AddRange(new[]
+		{
+			"Core",
+			"CoreUObject",
+			"Engine"
+		});
+
 		PrivateDependencyModuleNames.AddRange(
-			new string[]
+			new[]
 			{
-				
+				"EnhancedInput"
 			});
-		
+
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]
 			{
-				
 			});
 	}
 }

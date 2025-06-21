@@ -59,7 +59,7 @@ public:
 	 */
 	void HandleLookAndAiming(const FInputActionValue& Value);
 
-	void HandleWeaponFire();
+	void HandleJump();
 
 private:
 	/**
@@ -88,6 +88,9 @@ private:
 	 */
 	UPROPERTY(EditAnywhere, Category=Input, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> MoveAction;
+
+	UPROPERTY(EditAnywhere, Category=Input, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> JumpAction;
 
 	/**
 	 * @brief The Look action.

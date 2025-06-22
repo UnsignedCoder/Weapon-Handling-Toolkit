@@ -1,5 +1,3 @@
-Here's a comprehensive GitHub-style README for your Weapon Handling Module:
-
 # 🔫 Weapon Handling Module for Unreal Engine
 
 [![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5+-%23313131.svg?logo=unrealengine)](https://unrealengine.com/)
